@@ -308,7 +308,7 @@ def launch_app():
     # 1. 启动 Gradio 本地服务器
     # prevent_thread_lock=True 非常关键，确保能够继续执行后续的 pywebview 逻辑
     port = 7860
-    gradio_app.launch(server_port=port, prevent_thread_lock=True, show_api=False)
+    gradio_app.launch(server_port=port, prevent_thread_lock=True)
 
     # 2. 启动 PyWebview 创建原生桌面窗口包裹该端口
     webview.create_window(
