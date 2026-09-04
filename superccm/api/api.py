@@ -14,11 +14,11 @@ import networkx as nx
 
 
 def analysis(image_or_path, um_pixel_ratio=400/384) -> dict[str, float]:
-    image, mask, area = read(image_or_path)
-    binary = seg(image)
-    skeleton = skel(binary, mask, um_pixel_ratio)
-    graph = grfy(image, skeleton)
-    graph, trunks = trunk(graph, mask)
+    image, mask, area = read(image_or_path)  ## read image
+    binary = seg(image)  ## binary version of the image, using the pretrained model
+    skeleton = skel(binary, mask, um_pixel_ratio) ## skeleton version of the image
+    graph = grfy(image, skeleton) ## create graph of the image with networkx
+    graph, trunks = trunk(graph, mask) ## ??
     metrics = meas(graph, binary, trunks, area, um_pixel_ratio)
     return metrics
 
@@ -32,6 +32,28 @@ def analysis_and_vis(image_or_path, um_pixel_ratio=400/384) -> tuple[dict[str, f
     metrics = meas(graph, binary, trunks, area, um_pixel_ratio)
     image_vis = vis_ACCM(graph, image.shape[:2], image)
     return metrics, image_vis
+
+
+def create_graph(image_or_path, um_pixel_ratio=400/384) -> tuple[dict[str, float], np.ndarray]:
+    image, mask, area = read(image_or_path)
+    binary = seg(image)
+    skeleton = skel(binary, mask, um_pixel_ratio)
+    graph = grfy(image, skeleton)
+    # graph, trunks = trunk(graph, mask)
+    # metrics = meas(graph, binary, trunks, area, um_pixel_ratio)
+    # image_vis = vis_ACCM(graph, image.shape[:2], image)
+    return graph
+
+
+def create_trunks(image_or_path, um_pixel_ratio=400/384) -> tuple[dict[str, float], np.ndarray]:
+    image, mask, area = read(image_or_path)
+    binary = seg(image)
+    skeleton = skel(binary, mask, um_pixel_ratio)
+    graph = grfy(image, skeleton)
+    graph, trunks = trunk(graph, mask)
+    # metrics = meas(graph, binary, trunks, area, um_pixel_ratio)
+    # image_vis = vis_ACCM(graph, image.shape[:2], image)
+    return graph, trunks
 
 
 def read(image_or_path) -> tuple[np.ndarray, np.ndarray, int]:

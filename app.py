@@ -18,7 +18,7 @@ def refresh_image(img):
 
 class SuperCCMApp:
     """
-    GUI 应用程序逻辑类，用于管理所有 UI 状态与事件绑定
+    GUI application logic class for managing all UI states and event bindings.
     """
 
     def __init__(self):
@@ -27,13 +27,13 @@ class SuperCCMApp:
         self.SUPPORTED_EXTS = ('.png', '.jpg', '.jpeg', '.bmp', '.tif', '.tiff', '.webp')
 
     # ==========================
-    # Tkinter 弹窗交互方法
+    # Tkinter Pop-up interaction methods
     # ==========================
     def _get_tkinter_root(self):
-        """初始化隐藏的 Tkinter Root 窗口，避免 GUI 冲突"""
+        """Initialize a hidden Tkinter root window to avoid GUI conflicts."""
         root = tk.Tk()
-        root.attributes('-topmost', True)  # 确保对话框在最前
-        root.withdraw()  # 隐藏主窗口
+        root.attributes('-topmost', True)  # Make sure the dialog box is on top.
+        root.withdraw()  # Hide the main window
         return root
 
     def select_directory(self) -> str:
@@ -54,7 +54,7 @@ class SuperCCMApp:
         return path if path else ""
 
     # ==========================
-    # Gradio 事件回调方法
+    # Gradio Event callback method
     # ==========================
     def on_analyze_single(self, image, um: float, px: float):
         if image is None:
@@ -63,7 +63,7 @@ class SuperCCMApp:
         um_per_px = um / px if px else 1.0
         metrics, proc_img = analysis_and_vis(image, um_per_px)
 
-        # 将处理完的 BGR 图像转回 RGB，以便 Gradio 正常渲染色彩
+        # Convert the processed BGR image back to RGB so that Gradio renders the colors correctly.
         proc_img_rgb = cv2.cvtColor(proc_img, cv2.COLOR_BGR2RGB)
         return proc_img_rgb, metrics
 
@@ -97,7 +97,8 @@ class SuperCCMApp:
         return path, msg
 
     def on_start_batch(self, um: float, px: float, in_dir: str, out_dir: str):
-        """批量分析生成器函数，能够在后台实时返回最新进度而不阻塞 UI"""
+        """A batch analysis generator function capable of returning the latest 
+        progress in real-time in the background without blocking the UI."""
         self.stop_flag = False
         self.batch_result_df = pd.DataFrame()
 
@@ -129,14 +130,14 @@ class SuperCCMApp:
             if self.stop_flag:
                 break
 
-            # 调用处理算法
+            # Invoke the processing algorithm
             metrics, proc_img = analysis_and_vis(file_path, um_per_px)
 
-            # 将图像保存至输出目录
+            # Save the image to the output directory.
             out_path = Path(out_dir) / f"proc_{file_path.name}"
             cv2.imwrite(str(out_path), proc_img)
 
-            # 汇总数据
+            # Aggregate data
             record = {"Filename": file_path.name}
             record.update(metrics)
             results.append(record)
@@ -144,7 +145,8 @@ class SuperCCMApp:
             pct = int((i + 1) / total * 100)
             current_df = pd.DataFrame(results)
 
-            # 更新迭代 UI: [进度条, 数据表, csv按钮(不可用), xlsx按钮(不可用)]
+            # UI Updates: [Progress bar, data table, CSV button (disabled), 
+            # XLSX button (disabled)]
             yield (
                 self._render_progress(pct),
                 current_df,
@@ -152,7 +154,7 @@ class SuperCCMApp:
                 gr.update(interactive=False)
             )
 
-        # 结束批处理
+        # End batch processing
         self.batch_result_df = pd.DataFrame(results)
         is_done = not self.stop_flag and total > 0
         final_pct = 100 if is_done else int(len(results) / total * 100)
@@ -165,14 +167,14 @@ class SuperCCMApp:
         )
 
     def on_stop_batch(self):
-        """停止标志位注入"""
+        """Stop flag bit injection"""
         self.stop_flag = True
 
     def on_save_csv(self):
         if self.batch_result_df.empty: return
         path = self.save_file_dialog("CSV File", ".csv")
         if path:
-            self.batch_result_df.to_csv(path, index=False, encoding='utf-8-sig')  # 避免中文乱码
+            self.batch_result_df.to_csv(path, index=False, encoding='utf-8-sig')  # Avoid garbled Chinese characters
 
     def on_save_xlsx(self):
         if self.batch_result_df.empty: return
@@ -181,10 +183,10 @@ class SuperCCMApp:
             self.batch_result_df.to_excel(path, index=False)
 
     # ==========================
-    # UI 构建辅助方法
+    # UI Constructing helper methods
     # ==========================
     def _render_progress(self, pct: int) -> str:
-        """使用内联 HTML 渲染流畅的自定义进度条"""
+        """Render smooth, custom progress bars using inline HTML."""
         return f"""
         <div style='width: 100%; background-color: #e0e0e0; border-radius: 6px; overflow: hidden; height: 22px; box-shadow: inset 0 1px 3px rgba(0,0,0,.2);'>
             <div style='width: {pct}%; height: 100%; background-color: #4caf50; transition: width 0.3s ease; text-align: center; color: white; line-height: 22px; font-family: sans-serif; font-size: 13px; font-weight: bold;'>
@@ -194,9 +196,10 @@ class SuperCCMApp:
         """
 
     def build_ui(self) -> gr.Blocks:
-        """通过 Gradio API 组装应用程序的前端界面"""
+        """Assembling the application's frontend interface using the Gradio API."""
+        
         css = """
-        /* 强制图像框保持正方形 */
+        /* Force the image box to remain square. */
         .square-img { aspect-ratio: 1 / 1; object-fit: contain; width: 100%; height: auto;}
         .main-header { text-align: center; margin-bottom: 20px; }
         .main-header h1 { margin-bottom: 5px; color: #333; }
@@ -215,14 +218,17 @@ class SuperCCMApp:
                 ''')
 
                 with gr.Row():
-                    # 左半侧
+                    # Left side
                     with gr.Column(scale=1):
                         with gr.Row():
                             single_um = gr.Number(label="μm", value=400, precision=2)
                             single_px = gr.Number(label="per pixel", value=384, precision=0)
 
-                        # 使用同一图像组件作为输入及原位输出显示，并注入预设好的 CSS 控制比例
-                        single_img = gr.Image(type="numpy", image_mode="RGB", elem_classes="square-img",
+                        # Use the same image component for both input and in-place output display, 
+                        # and inject preset CSS to control the aspect ratio.
+                        single_img = gr.Image(type="numpy", 
+                                              image_mode="RGB", 
+                                              elem_classes="square-img",
                                               label="Preview")
 
                         with gr.Row():
@@ -231,11 +237,11 @@ class SuperCCMApp:
                             btn_single_analyze = gr.Button("Analysis", variant="primary")
 
 
-                    # 右半侧
+                    # Right half
                     with gr.Column(scale=1):
                         single_results = gr.JSON(label="Analysis Results")
 
-                # 单图事件绑定
+                # Single-image event binding
                 btn_refresh.click(
                     fn=refresh_image,
                     inputs=[single_img],
@@ -247,13 +253,13 @@ class SuperCCMApp:
                     outputs=[single_img, single_results]
                 )
                 btn_single_clear.click(
-                    fn=lambda: (None, None),  # 直接使用 lambda 清空输出
+                    fn=lambda: (None, None),  # Use a lambda directly to clear the output.
                     outputs=[single_img, single_results]
                 )
 
             with gr.Tab("Batch Analysis"):
                 with gr.Row():
-                    # 左半侧
+                    # Left side
                     with gr.Column(scale=1):
                         with gr.Row():
                             batch_um = gr.Number(label="μm", value=400, precision=2)
@@ -267,13 +273,13 @@ class SuperCCMApp:
                         with gr.Row():
                             btn_out_dir = gr.Button("Select Output Directory")
                         out_dir_txt = gr.Textbox(label="Output Directory", interactive=False)
-                        out_status_txt = gr.HTML("<br>")  # 空白占位防抖动
+                        out_status_txt = gr.HTML("<br>")  # Blank placeholder to prevent layout shift
 
                         with gr.Row():
                             btn_batch_start = gr.Button("Start", variant="primary")
                             btn_batch_stop = gr.Button("Stop", variant="stop")
 
-                    # 右半侧
+                    # Right half
                     with gr.Column(scale=1):
                         batch_progress = gr.HTML(self._render_progress(0), label="Task Progress")
 
@@ -283,7 +289,7 @@ class SuperCCMApp:
 
                         batch_table = gr.Dataframe(label="DATA", interactive=False)
 
-                # 批处理事件绑定
+                # Batch event binding
                 btn_in_dir.click(fn=self.on_select_input_dir, outputs=[in_dir_txt, in_count_txt])
                 btn_out_dir.click(fn=self.on_select_output_dir, outputs=[out_dir_txt, out_status_txt])
 
@@ -301,16 +307,17 @@ class SuperCCMApp:
 
 
 def launch_app():
-    """环境配置与启动器"""
+    """Environment Configuration and Launcher"""
     app_logic = SuperCCMApp()
     gradio_app = app_logic.build_ui()
 
-    # 1. 启动 Gradio 本地服务器
-    # prevent_thread_lock=True 非常关键，确保能够继续执行后续的 pywebview 逻辑
+    # 1. Start the local Gradio server.
+    # prevent_thread_lock=True This is crucial to ensure that the subsequent 
+    # pywebview logic can continue to execute.
     port = 7860
     gradio_app.launch(server_port=port, prevent_thread_lock=True)
 
-    # 2. 启动 PyWebview 创建原生桌面窗口包裹该端口
+    # 2. Launch PyWebview to create a native desktop window wrapping that port.
     webview.create_window(
         title="SuperCCM WorkStation",
         url=f"http://127.0.0.1:{port}",
@@ -318,7 +325,7 @@ def launch_app():
         height=850,
         min_size=(1024, 768)
     )
-    # 阻塞启动原生窗体
+    # Block until the native window starts.
     webview.start()
 
 

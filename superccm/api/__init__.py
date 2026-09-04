@@ -1,6 +1,9 @@
 from .api import (
     read, seg, skel, trunk, grfy, meas, analysis,
-    vgnt_corr, hist_std, est_wid, analysis_and_vis
+    vgnt_corr, hist_std, est_wid, analysis_and_vis,
+    
+    create_graph,
+    create_trunks
 )
 
 from superccm.impl.utils.tools import show_image, save_image
