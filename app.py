@@ -208,7 +208,7 @@ class SuperCCMApp:
         """
 
         with gr.Blocks(title="SuperCCM WorkStation", css=css, theme=gr.themes.Soft()) as app:
-            with gr.Tab("Single-image Analysis"):
+            with gr.Tab("Single-image Analysis built for Aysel"):
                 gr.HTML('''
                     <div class="main-header">
                         <h1>SuperCCM WorkStation</h1>
